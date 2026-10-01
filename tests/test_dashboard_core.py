@@ -268,8 +268,7 @@ def test_parse_params_falls_back_on_non_numeric_windows():
 def test_parse_params_keeps_ma_windows_sorted_and_unique():
     s = dc.parse_params({"ma1": "60", "ma2": "5", "ma3": "5"}, DATA_START, DATA_END)
 
-    assert s.ma_windows == tuple(sorted(set(s.ma_windows)))
-    assert len(s.ma_windows) >= 1
+    assert s.ma_windows == (5, 60)
 
 
 def test_parse_params_pushes_holdout_back_when_window_would_overrun():

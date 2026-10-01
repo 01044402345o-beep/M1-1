@@ -77,6 +77,8 @@ dashboard.py          (신규)            Streamlit UI 껍데기. 위젯 배치�
 
 `DashboardState`는 `dataclass`로 정의한다: `start`, `end`, `ma_windows`, `vol_window`, `holdout_start`, `horizon`.
 
+> [2026-10-01] 위 표는 구현과 두 군데 다르다. (1) `load_prepared`는 표에 적힌 대로 `add_returns`까지 포함하지 않는다 — `add_returns`는 `recompute_indicators`로 옮겨졌다. (2) `summarize_period`는 단일 인자가 아니라 `summarize_period(df, vol_window)`로 `vol_window`를 받는다. 두 변경 모두 바로 아래 "지표 재계산 정책" 때문에 필요했다: `cum_return`을 포함한 지표가 선택 구간에 국한되려면 구간을 자르기 **전에** `load_prepared`가 그 지표를 계산해 둘 수 없고, 변동성 평균도 선택된 `vol_window`로 그때그때 다시 계산해야 하므로 `summarize_period`가 그 값을 인자로 받아야 한다. 즉 이 인터페이스 표와 재계산 정책 절이 서로 모순되며, 구현은 정책 절을 따랐다 — **정책 절이 우선한다.**
+
 ### 지표 재계산 정책 (중요)
 
 기간을 바꾸면 **선택 구간의 데이터만으로 지표를 다시 계산한다.** 전 구간에서 계산한 뒤 잘라 보여주지 않는다.

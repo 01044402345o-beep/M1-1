@@ -1,7 +1,8 @@
 """비트코인 분석 대시보드 (Streamlit).
 
-계산 로직이 없는 껍데기다. 모든 수치는 dashboard_core 를 통해
-검증된 btc_analysis 함수에서 나온다.
+지표·메트릭·예측을 직접 계산하지 않는다. 그런 수치는 모두 dashboard_core 를
+통해 검증된 btc_analysis 함수에서 나온다. 이 파일에 남아 있는 산술은 표시용
+집계뿐이다(3σ 초과일 합계, 가장 긴 윈도 계산, MAE 최저 모델 선택 등).
 
 실행: streamlit run dashboard.py
 """
@@ -38,6 +39,10 @@ st.caption(
     "색상은 한국 금융 관행을 따릅니다 — **상승 = 빨강, 하락 = 파랑** (미국 관행과 반대). "
     "모든 수치는 리포트와 동일한 `btc_analysis.py` 함수에서 계산됩니다."
 )
+st.caption(
+    "본 저장소는 데이터 분석 학습 산출물이다. 투자 권유나 투자 조언이 아니다. "
+    "Yahoo Finance 데이터는 **개인적·비상업적 용도**로만 사용이 허용된다."
+)
 
 with st.sidebar:
     st.header("조건")
@@ -66,7 +71,7 @@ with st.sidebar:
         "홀드아웃 시작일",
         value=state.holdout_start.date(),
         min_value=(data_start + pd.Timedelta(days=dc.MIN_TRAIN_DAYS)).date(),
-        max_value=data_end.date(),
+        max_value=(data_end - pd.Timedelta(days=int(horizon) - 1)).date(),
     )
 
 # 위젯 값을 다시 parse_params 에 통과시켜 검증을 한 곳에만 둔다.
@@ -93,11 +98,12 @@ if window.empty:
 st.subheader("1. 구간 요약")
 summary = dc.summarize_period(window, state.vol_window)
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("기간 누적 수익률", f"{summary['cum_return'] * 100:,.1f}%", f"{summary['n_days']}일")
+c1.metric("기간 누적 수익률", f"{summary['cum_return'] * 100:,.1f}%", f"{summary['n_days']}일",
+          delta_color="off")
 c2.metric("최대 낙폭(MDD)", f"{summary['mdd'] * 100:,.1f}%",
           f"{summary['mdd_peak'].date()} → {summary['mdd_trough'].date()}", delta_color="off")
 c3.metric(f"연율 변동성 평균({state.vol_window}일)",
-          "계산 불가" if summary["vol_mean"] != summary["vol_mean"]
+          "계산 불가" if pd.isna(summary["vol_mean"])
           else f"{summary['vol_mean'] * 100:,.1f}%")
 c4.metric("3σ 초과일", f"{summary['outlier_up'] + summary['outlier_down']}일",
           f"상승 {summary['outlier_up']} / 하락 {summary['outlier_down']}", delta_color="off")
@@ -169,6 +175,14 @@ else:
     ax.set_ylabel("가격 (USD)")
     ax.legend(loc="best")
     ax.grid(alpha=0.3)
+    fig.autofmt_xdate()
     st.pyplot(fig)
     plt.close(fig)
-    st.dataframe(scores.round(2), use_container_width=True)
+    st.dataframe(
+        scores.round(2),
+        column_config={
+            "mae": st.column_config.NumberColumn("MAE", format="%.2f"),
+            "mape": st.column_config.NumberColumn("MAPE", format="%.2f%%"),
+            "direction_accuracy": st.column_config.NumberColumn("방향 정확도", format="%.0f%%"),
+        },
+    )
