@@ -54,6 +54,25 @@ python -m jupyter nbconvert --to notebook --execute --inplace analysis.ipynb
 노트북은 위에서 아래로 순서대로 실행한다. 네트워크에 접근하지 않고 `data/`의 CSV만 읽으므로
 언제 실행해도 같은 결과가 나온다.
 
+## 대시보드 (보너스 과제)
+
+기간·이동평균·변동성 윈도·예측 홀드아웃 구간을 바꿔가며 분석을 탐색할 수 있다.
+
+```bash
+streamlit run dashboard.py
+```
+
+브라우저가 자동으로 열린다(기본 http://localhost:8501). URL 쿼리로 상태를 지정할 수도 있다:
+
+```
+http://localhost:8501/?start=2024-01-01&end=2024-12-31&ma1=5&ma2=20&ma3=60&holdout=2026-06-01
+```
+
+스크린샷과 시나리오 설명: [docs/dashboard/README.md](docs/dashboard/README.md)
+
+계산은 전부 `btc_analysis.py` 의 검증된 함수가 수행한다. `dashboard.py` 는 위젯과
+렌더링만 담당하고, 파라미터 검증·구간 슬라이싱은 테스트된 `dashboard_core.py` 에 있다.
+
 ## 설계 원칙
 
 - **수집과 분석 분리**: 노트북이 매번 데이터를 새로 받으면 실행 시점에 따라 결과가 달라진다.
