@@ -10,6 +10,7 @@ Streamlit 스크립트는 런타임에 묶여 있어 단위 테스트가 사실�
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
@@ -97,3 +98,85 @@ def evaluate_holdout_window(
         )
 
     return ba.run_baselines(truncated, horizon=horizon)
+
+
+DEFAULT_MA_WINDOWS = (7, 30, 90)
+DEFAULT_VOL_WINDOW = 30
+DEFAULT_HORIZON = 30
+MA_WINDOW_RANGE = (2, 200)
+VOL_WINDOW_RANGE = (5, 120)
+HORIZON_RANGE = (7, 90)
+
+
+@dataclass(frozen=True)
+class DashboardState:
+    """화면이 그릴 내용을 결정하는 상태. 불변이다."""
+
+    start: pd.Timestamp
+    end: pd.Timestamp
+    ma_windows: tuple[int, ...]
+    vol_window: int
+    holdout_start: pd.Timestamp
+    horizon: int
+
+
+def _as_date(value, fallback: pd.Timestamp) -> pd.Timestamp:
+    """날짜로 못 읽으면 fallback 을 쓴다. 예외를 던지지 않는다."""
+    if value is None:
+        return fallback
+    try:
+        parsed = pd.Timestamp(value)
+    except (ValueError, TypeError):
+        return fallback
+    return fallback if pd.isna(parsed) else parsed.normalize()
+
+
+def _as_int(value, fallback: int, bounds: tuple[int, int]) -> int:
+    """정수로 못 읽으면 fallback, 읽히면 범위로 자른다."""
+    low, high = bounds
+    try:
+        number = int(str(value).strip())
+    except (ValueError, TypeError, AttributeError):
+        return fallback
+    return max(low, min(high, number))
+
+
+def parse_params(raw: dict, data_start, data_end) -> DashboardState:
+    """URL 쿼리/위젯 입력을 검증·보정해 DashboardState 로 만든다.
+
+    잘못된 입력에 예외를 던지지 않고 기본값으로 떨어진다. URL 은 사람이 손으로
+    고칠 수 있고 캡처 스크립트가 만들기도 하므로, 오타 하나로 화면이 죽는 것보다
+    안전한 값으로 보정되는 쪽이 낫다.
+    """
+    data_start = pd.Timestamp(data_start).normalize()
+    data_end = pd.Timestamp(data_end).normalize()
+
+    start = _as_date(raw.get("start"), data_start)
+    end = _as_date(raw.get("end"), data_end)
+    if start > end:
+        start, end = end, start
+    start = min(max(start, data_start), data_end)
+    end = min(max(end, data_start), data_end)
+
+    windows = tuple(
+        _as_int(raw.get(key), default, MA_WINDOW_RANGE)
+        for key, default in zip(("ma1", "ma2", "ma3"), DEFAULT_MA_WINDOWS)
+    )
+    ma_windows = tuple(sorted(set(windows)))
+
+    vol_window = _as_int(raw.get("vol"), DEFAULT_VOL_WINDOW, VOL_WINDOW_RANGE)
+    horizon = _as_int(raw.get("horizon"), DEFAULT_HORIZON, HORIZON_RANGE)
+
+    latest_holdout = data_end - pd.Timedelta(days=horizon - 1)
+    earliest_holdout = data_start + pd.Timedelta(days=MIN_TRAIN_DAYS)
+    holdout_start = _as_date(raw.get("holdout"), latest_holdout)
+    holdout_start = min(max(holdout_start, earliest_holdout), latest_holdout)
+
+    return DashboardState(
+        start=start,
+        end=end,
+        ma_windows=ma_windows,
+        vol_window=vol_window,
+        holdout_start=holdout_start,
+        horizon=horizon,
+    )

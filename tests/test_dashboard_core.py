@@ -192,3 +192,103 @@ def test_evaluate_holdout_window_reproduces_report_counterfactual():
     assert scores.loc["Drift", "mae"] == pytest.approx(11287.03, abs=0.01)
     assert scores.loc["이동평균(7일)", "mae"] == pytest.approx(11526.55, abs=0.01)
     assert scores["mae"].idxmin() == "Naive"
+
+
+DATA_START = pd.Timestamp("2023-01-01")
+DATA_END = pd.Timestamp("2026-09-29")
+
+
+def test_parse_params_defaults_when_empty():
+    s = dc.parse_params({}, DATA_START, DATA_END)
+
+    assert s.start == DATA_START
+    assert s.end == DATA_END
+    assert s.ma_windows == (7, 30, 90)
+    assert s.vol_window == 30
+    assert s.horizon == 30
+    assert s.holdout_start == DATA_END - pd.Timedelta(days=29)  # 마지막 30일
+
+
+def test_parse_params_reads_valid_values():
+    s = dc.parse_params(
+        {"start": "2024-01-01", "end": "2024-12-31", "ma1": "5", "ma2": "20",
+         "ma3": "60", "vol": "14", "holdout": "2024-12-01", "horizon": "15"},
+        DATA_START, DATA_END,
+    )
+
+    assert s.start == pd.Timestamp("2024-01-01")
+    assert s.end == pd.Timestamp("2024-12-31")
+    assert s.ma_windows == (5, 20, 60)
+    assert s.vol_window == 14
+    assert s.holdout_start == pd.Timestamp("2024-12-01")
+    assert s.horizon == 15
+
+
+def test_parse_params_clamps_dates_into_data_range():
+    s = dc.parse_params({"start": "2020-01-01", "end": "2099-12-31"}, DATA_START, DATA_END)
+
+    assert s.start == DATA_START
+    assert s.end == DATA_END
+
+
+def test_parse_params_swaps_reversed_dates():
+    s = dc.parse_params({"start": "2025-06-01", "end": "2024-06-01"}, DATA_START, DATA_END)
+
+    assert s.start == pd.Timestamp("2024-06-01")
+    assert s.end == pd.Timestamp("2025-06-01")
+
+
+def test_parse_params_falls_back_on_garbage_dates():
+    s = dc.parse_params({"start": "어제", "end": "2024-13-45"}, DATA_START, DATA_END)
+
+    assert s.start == DATA_START
+    assert s.end == DATA_END
+
+
+def test_parse_params_clamps_window_values():
+    s = dc.parse_params({"ma1": "1", "ma2": "999", "vol": "0", "horizon": "500"},
+                        DATA_START, DATA_END)
+
+    # ma1=1 은 하한 2 로, ma2=999 는 상한 200 으로 클램프되고,
+    # ma3 는 지정되지 않아 기본값 90 이 채워진 뒤 중복 제거·정렬된다.
+    assert s.ma_windows == (2, 90, 200)
+    assert s.vol_window == 5         # VOL_WINDOW_RANGE 하한
+    assert s.horizon == 90           # HORIZON_RANGE 상한
+
+
+def test_parse_params_falls_back_on_non_numeric_windows():
+    s = dc.parse_params({"ma1": "일곱", "vol": "", "horizon": "삼십"},
+                        DATA_START, DATA_END)
+
+    assert s.ma_windows == (7, 30, 90)
+    assert s.vol_window == 30
+    assert s.horizon == 30
+
+
+def test_parse_params_keeps_ma_windows_sorted_and_unique():
+    s = dc.parse_params({"ma1": "60", "ma2": "5", "ma3": "5"}, DATA_START, DATA_END)
+
+    assert s.ma_windows == tuple(sorted(set(s.ma_windows)))
+    assert len(s.ma_windows) >= 1
+
+
+def test_parse_params_pushes_holdout_back_when_window_would_overrun():
+    s = dc.parse_params({"holdout": "2026-09-25", "horizon": "30"}, DATA_START, DATA_END)
+
+    assert s.holdout_start + pd.Timedelta(days=s.horizon - 1) <= DATA_END
+
+
+def test_parse_params_keeps_minimum_training_days():
+    s = dc.parse_params({"holdout": "2023-01-01", "horizon": "30"}, DATA_START, DATA_END)
+
+    train_days = (s.holdout_start - DATA_START).days
+    assert train_days >= dc.MIN_TRAIN_DAYS
+
+
+def test_dashboard_state_is_immutable():
+    import dataclasses
+
+    s = dc.parse_params({}, DATA_START, DATA_END)
+
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        s.vol_window = 99
