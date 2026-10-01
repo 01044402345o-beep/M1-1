@@ -73,6 +73,14 @@ http://localhost:8501/?start=2024-01-01&end=2024-12-31&ma1=5&ma2=20&ma3=60&holdo
 계산은 전부 `btc_analysis.py` 의 검증된 함수가 수행한다. `dashboard.py` 는 위젯과
 렌더링만 담당하고, 파라미터 검증·구간 슬라이싱은 테스트된 `dashboard_core.py` 에 있다.
 
+## 발표 슬라이드
+
+분석 결과를 12장으로 정리한 발표 자료: [`docs/slides/index.html`](docs/slides/index.html)
+
+브라우저로 파일을 열면 된다. `←` `→` 키로 넘기고, `전체 보기` 버튼을 누르면 12장을
+한 문서로 펼쳐 읽거나 인쇄할 수 있다. 수치는 모두 `analysis.ipynb` 실행 출력과
+`btc_analysis.py` 함수 산출값에서 가져왔다.
+
 ## 설계 원칙
 
 - **수집과 분석 분리**: 노트북이 매번 데이터를 새로 받으면 실행 시점에 따라 결과가 달라진다.

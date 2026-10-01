@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="2023-2026 비트코인 일봉 분석 발표 슬라이드">
+<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>비트코인 1,368일</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700&display=swap">
+<style>
+  :root{
+    --ground:#f7f6f2; --surface:#fffefb; --sunk:#f0efe9;
+    --ink:#1b1a17; --ink-2:#44423c; --muted:#6e6b63; --line:#e0ddd4;
+    --up:#e34948; --down:#2a78d6;
+    --c1:#2a78d6; --c2:#eb6834; --c3:#1baf7a;
+    --good:#1baf7a;
+    --shadow:0 1px 2px rgba(27,26,23,.06), 0 8px 24px -16px rgba(27,26,23,.3);
+    --r:10px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#141419; --surface:#1d1d23; --sunk:#232329;
+      --ink:#f0efec; --ink-2:#cfccc5; --muted:#9b978e; --line:#30303a;
+      --up:#e34948; --down:#2a78d6;
+      --c1:#2a78d6; --c2:#d4752f; --c3:#1baf7a;
+      --good:#1baf7a;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#141419; --surface:#1d1d23; --sunk:#232329;
+    --ink:#f0efec; --ink-2:#cfccc5; --muted:#9b978e; --line:#30303a;
+    --up:#e34948; --down:#2a78d6;
+    --c1:#2a78d6; --c2:#d4752f; --c3:#1baf7a;
+    --good:#1baf7a;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground); color:var(--ink);
+    font-family:"IBM Plex Sans KR", system-ui, -apple-system, "Malgun Gothic", sans-serif;
+    font-size:15px; line-height:1.65; -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:"Noto Serif KR","Apple SD Gothic Neo",serif; font-weight:700; text-wrap:balance; margin:0; line-height:1.3}
+  p{margin:0}
+  strong{font-weight:600}
+  .num{font-variant-numeric:tabular-nums}
+
+  .wrap{max-width:1040px; margin:0 auto; padding-inline:16px; padding-block:0}
+
+  /* ---- slide frame ---- */
+  .slide{padding-block:34px 28px}
+  .eyebrow{
+    display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+    font-size:11.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:14px;
+  }
+  .eyebrow .rule{flex:1 1 40px; height:1px; background:var(--line); min-width:24px}
+  h2.stitle{font-size:clamp(23px,4.4vw,34px); margin-bottom:8px}
+  .lede{color:var(--ink-2); font-size:clamp(15px,2.3vw,17px); max-width:62ch; margin-bottom:22px}
+
+  /* ---- cover ---- */
+  .cover h1{font-size:clamp(34px,8vw,62px); letter-spacing:-.015em; margin-bottom:12px}
+  .cover .sub{color:var(--ink-2); font-size:clamp(15px,2.6vw,19px); max-width:56ch; margin-bottom:28px}
+  .meta{display:flex; gap:8px 18px; flex-wrap:wrap; color:var(--muted); font-size:13px; margin-top:26px}
+  .meta span{white-space:nowrap}
+
+  /* ---- tiles ---- */
+  .tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px}
+  .tile{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:16px 16px 14px}
+  .tile .k{font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
+  .tile .v{font-family:"Noto Serif KR",serif; font-weight:700; font-size:clamp(25px,5vw,34px); line-height:1.1; letter-spacing:-.02em}
+  .tile .n{font-size:12.5px; color:var(--muted); margin-top:5px}
+  .v.up{color:var(--up)} .v.down{color:var(--down)}
+
+  /* ---- generic blocks ---- */
+  .cols{display:grid; grid-template-columns:repeat(auto-fit,minmax(265px,1fr)); gap:18px; align-items:start}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:16px}
+  .card h3{font-size:15.5px; margin-bottom:8px}
+  .card p + p{margin-top:8px}
+  .card.flat{background:transparent; border:0; padding:0}
+
+  .qlist{list-style:none; padding:0; margin:0; display:grid; gap:9px; counter-reset:q}
+  .qlist li{display:grid; grid-template-columns:auto 1fr; gap:11px; align-items:baseline}
+  .qlist li::before{
+    counter-increment:q; content:"Q" counter(q);
+    font-size:11.5px; font-weight:600; letter-spacing:.04em; color:var(--muted);
+    border:1px solid var(--line); border-radius:5px; padding:1px 6px; background:var(--surface);
+  }
+  .tag{font-size:11px; color:var(--muted); white-space:nowrap}
+
+  .keypoint{
+    border-left:3px solid var(--up); padding:2px 0 2px 14px; margin:18px 0 0;
+    font-size:clamp(15.5px,2.5vw,18px); font-family:"Noto Serif KR",serif; font-weight:600; line-height:1.5;
+  }
+  .keypoint.calm{border-left-color:var(--down)}
+  .keypoint.good{border-left-color:var(--good)}
+
+  .obs{display:grid; gap:11px}
+  .obs .row{display:grid; grid-template-columns:minmax(118px,auto) 1fr; gap:14px; align-items:baseline;
+    padding-bottom:11px; border-bottom:1px solid var(--line)}
+  .obs .row:last-child{border-bottom:0; padding-bottom:0}
+  .obs .f{font-family:"Noto Serif KR",serif; font-weight:700; font-size:17px; letter-spacing:-.01em}
+  .obs .w{color:var(--ink-2); font-size:14px}
+
+  /* ---- tables ---- */
+  .tscroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
+  table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:360px}
+  caption{text-align:left; font-size:12px; color:var(--muted); padding-bottom:7px}
+  th,td{padding:8px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  thead th{font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); font-weight:500}
+  tbody tr.win td{background:var(--sunk); font-weight:600}
+  .swatch{display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:7px; vertical-align:baseline}
+
+  /* ---- charts ---- */
+  figure{margin:0}
+  figcaption{font-size:12.5px; color:var(--muted); margin-top:9px; max-width:64ch}
+  svg{display:block; width:100%; height:auto; max-width:100%; overflow:visible}
+  .ax{stroke:var(--line); stroke-width:1}
+  .axtext{fill:var(--muted); font-size:10.5px; font-family:"IBM Plex Sans KR",sans-serif}
+  .lbl{fill:var(--ink-2); font-size:11px; font-family:"IBM Plex Sans KR",sans-serif}
+  .lbl.b{fill:var(--ink); font-weight:600}
+  .legend{display:flex; align-items:center; gap:8px 18px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-2); margin-bottom:14px}
+  .legend > span{display:inline-flex; align-items:center; gap:7px; white-space:nowrap}
+  .legend i{display:block; flex:none; width:11px; height:11px; border-radius:2px}
+  .legend i.rng{width:2px; height:14px; border-radius:1px}
+
+  /* month grid */
+  .mgrid{display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:6px; margin-top:4px}
+  .mcol{display:flex; flex-direction:column; align-items:center; gap:5px}
+  .dots{display:flex; flex-direction:column-reverse; gap:3px; align-items:center}
+  .dot{width:13px; height:13px; border-radius:3px; background:var(--sunk); border:1px solid var(--line)}
+  .dot.pos{background:var(--up); border-color:var(--up)}
+  .mname{font-size:10.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+  .mfrac{font-size:10.5px; color:var(--ink-2); font-variant-numeric:tabular-nums}
+  .mcol.hi .mfrac{color:var(--up); font-weight:600}
+
+  /* ---- chrome ---- */
+  .bar{
+    position:sticky; bottom:0; background:color-mix(in srgb, var(--ground) 88%, transparent);
+    backdrop-filter:blur(8px); border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom,0px); margin-top:26px; z-index:5;
+  }
+  .barin{max-width:1040px; margin:0 auto; padding:9px 16px; display:flex; align-items:center; gap:12px}
+  .prog{flex:1 1 auto; height:2px; background:var(--line); border-radius:2px; overflow:hidden; min-width:40px}
+  .prog i{display:block; height:100%; background:var(--ink); transition:width .25s ease}
+  .count{font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap}
+  button{
+    font:inherit; font-size:13px; color:var(--ink); background:var(--surface);
+    border:1px solid var(--line); border-radius:7px; padding:5px 11px; cursor:pointer;
+  }
+  button:hover{border-color:var(--muted)}
+  button:disabled{opacity:.4; cursor:default}
+  button:focus-visible, a:focus-visible{outline:2px solid var(--down); outline-offset:2px; border-radius:4px}
+  .hint{font-size:12px; color:var(--muted)}
+  a{color:var(--down)}
+
+  body.overview .bar .nav{display:none}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+  @media print{
+    .bar{display:none}
+    .slide{break-after:page; display:block !important}
+  }
+  @media (max-width:520px){
+    .hint{display:none}
+    .mgrid{gap:3px}
+    .dot{width:10px;height:10px}
+  }
+</style>
+</head>
+<body>
+<main class="wrap" id="deck">
+
+  <!-- 1 -->
+  <section class="slide cover" id="s1">
+    <div class="eyebrow"><span>발표 자료</span><span class="rule"></span><span>2026-10-01</span></div>
+    <h1>비트코인 1,368일</h1>
+    <p class="sub">2023-01-01부터 2026-09-29까지의 일봉으로 추세·변동성·반복 패턴을 검증하고, 가장 단순한 예측을 이길 수 있는지 실험했다.</p>
+    <div class="tiles">
+      <div class="tile"><div class="k">기간 누적 수익률</div><div class="v up num">+403.0%</div><div class="n">$16,625 → $83,622</div></div>
+      <div class="tile"><div class="k">최대 낙폭</div><div class="v down num">−53.1%</div><div class="n">2025-10-06 → 2026-06-30</div></div>
+      <div class="tile"><div class="k">검증 테스트</div><div class="v num">61</div><div class="n">전부 통과 · 경고 0건</div></div>
+    </div>
+    <p class="meta"><span>출처 Yahoo Finance</span><span>일 단위 1,368행</span><span>결측 0건</span><span>Python 3.14 · pandas 3.0</span></p>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide" id="s2" hidden>
+    <div class="eyebrow"><span>01 — 데이터와 질문</span><span class="rule"></span></div>
+    <h2 class="stitle">무엇을 알고 싶었나</h2>
+    <p class="lede">그래프로 바로 확인되는 질문과, 해석이 필요한 질문을 섞어 다섯 개를 세웠다.</p>
+    <div class="cols">
+      <div class="card flat">
+        <ol class="qlist">
+          <li><span>전체 추세는 상승인가? 전환 구간은 언제인가 <span class="tag">· 그래프</span></span></li>
+          <li><span>변동성은 특정 구간에 몰리는가 <span class="tag">· 그래프</span></span></li>
+          <li><span>월별 반복 패턴이 있는가 <span class="tag">· 해석</span></span></li>
+          <li><span>요일 효과가 존재하는가 <span class="tag">· 해석</span></span></li>
+          <li><span>단순 예측을 이길 수 있는가 <span class="tag">· 실험</span></span></li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3>왜 비트코인인가</h3>
+        <p>연중무휴로 거래되므로 <strong>주말 데이터가 존재한다.</strong> 주식으로는 요일 효과를 물을 수 없다 — 토·일이 아예 비어 있기 때문이다.</p>
+        <p>변동성이 커서 이동평균·변화율·롤링 표준편차의 적용 결과가 시각적으로 뚜렷하게 드러난다.</p>
+      </div>
+    </div>
+    <p class="keypoint calm">질문을 먼저 세우고 데이터를 봤다. 그래프를 먼저 그리고 거기서 할 말을 찾지 않았다.</p>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide" id="s3" hidden>
+    <div class="eyebrow"><span>02 — 정제</span><span class="rule"></span></div>
+    <h2 class="stitle">이상치를 제거하지 않기로 했다</h2>
+    <p class="lede">가장 자주 받는 질문이고, 답이 반직관적이라 기준을 먼저 세웠다.</p>
+    <div class="cols">
+      <div class="card">
+        <h3>제거한 것 — 데이터 오류만</h3>
+        <p>가격 0 이하, 전일 대비 ±50% 초과, <span class="num">High &lt; Low</span>. 물리적으로 불가능하거나 논리적으로 모순된 값이다.</p>
+        <p class="num" style="color:var(--muted)">실제 적용 결과 <strong style="color:var(--ink)">0건</strong></p>
+      </div>
+      <div class="card">
+        <h3>남긴 것 — 3σ 초과 20일</h3>
+        <p>비트코인의 하루 ±10%는 측정 오류가 아니라 <strong>분석 대상 신호 그 자체</strong>다. 제거하면 변동성을 분석하려고 변동성을 지우는 자기모순이 된다.</p>
+        <p class="num" style="color:var(--muted)">전체의 <strong style="color:var(--ink)">1.5%</strong> · 탐지만 하고 보존</p>
+      </div>
+    </div>
+    <p class="keypoint">정제가 수행된 게 아니라, 정제 기준을 통과했다. 결측 0건 · 보간 0건 · 제거 0건.</p>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide" id="s4" hidden>
+    <div class="eyebrow"><span>03 — 관찰</span><span class="rule"></span></div>
+    <h2 class="stitle">변동성은 일정하지 않다</h2>
+    <div class="obs">
+      <div class="row"><div class="f num up">+403.0%</div><div class="w">기간 누적 수익률. 일평균 <span class="num">0.1478%</span>, 일간 표준편차 <span class="num">2.44%</span> — 평균보다 산포가 <span class="num">16배</span> 넘게 크다.</div></div>
+      <div class="row"><div class="f num">44.7%</div><div class="w">연율 변동성 평균. 연중무휴 거래이므로 <span class="num">√365</span>로 연율화했다(주식의 252가 아니다).</div></div>
+      <div class="row"><div class="f num">84.6%</div><div class="w">최대치, <span class="num">2024-03-26</span>. 최소 <span class="num">17.0%</span>(<span class="num">2023-08-13</span>)의 약 <span class="num">5배</span> — 변동성이 특정 구간에 몰린다.</div></div>
+    </div>
+    <p class="keypoint calm">Q2의 답: 변동성 집중 구간이 존재한다. 평균 하나로 이 시계열을 요약할 수 없다.</p>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide" id="s5" hidden>
+    <div class="eyebrow"><span>04 — 관찰</span><span class="rule"></span></div>
+    <h2 class="stitle">+403%를 말할 때 빠지는 것</h2>
+    <div class="tiles" style="margin-bottom:18px">
+      <div class="tile"><div class="k">최대 낙폭</div><div class="v down num">−53.1%</div><div class="n">2025-10-06 고점 → 2026-06-30 저점 · 8개월 이상</div></div>
+      <div class="tile"><div class="k">3σ 초과 상승일</div><div class="v up num">16일</div><div class="n">최대 +12.52% (z +5.07)</div></div>
+      <div class="tile"><div class="k">3σ 초과 하락일</div><div class="v down num">4일</div><div class="n">최대 −14.13% (z −5.85)</div></div>
+    </div>
+    <div class="cols">
+      <div class="card flat">
+        <p style="color:var(--ink-2)"><strong>관찰(Fact)</strong> — 극단값은 상승 쪽이 하락 쪽의 4배다. 그러나 <strong>단일 최대 절댓값은 하락 쪽</strong>(−14.13%)이다.</p>
+      </div>
+      <div class="card flat">
+        <p style="color:var(--ink-2)"><strong>해석(Why)</strong> — 개수만 보고 "상승 편향"으로 읽으면 틀린다. n=20으로 작고, 우편향 분포에 z 임계를 적용하면 비대칭이 기계적으로 생긴다. <span class="tag">(검증 필요)</span></p>
+      </div>
+    </div>
+    <p class="keypoint">수익률만 보면 보이지 않는다. 8개월 넘는 −53% 구간을 견딜 수 있는지가 함께 와야 한다.</p>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide" id="s6" hidden>
+    <div class="eyebrow"><span>05 — 패턴 검증</span><span class="rule"></span></div>
+    <h2 class="stitle">9월은 4년 모두 올랐다. 그래도 쓰지 않았다</h2>
+    <figure>
+      <div class="legend">
+        <span><i class="bar" style="background:var(--up)"></i>그 해 양수</span>
+        <span><i class="bar" style="background:var(--sunk); border:1px solid var(--line)"></i>음수</span>
+        <span style="color:var(--muted)">칸 하나 = 한 해 · 10~12월은 3년치</span>
+      </div>
+      <div class="mgrid" id="mgrid"></div>
+      <figcaption>월별 수익률의 부호 일관성. 9월만 4/4이고 나머지는 1/4 ~ 3/4에 흩어져 있다.</figcaption>
+    </figure>
+    <div class="cols" style="margin-top:18px">
+      <div class="card">
+        <h3>왜 "9월 효과"가 아닌가</h3>
+        <p>4년에서 4/4는 동전던지기 귀무가설에서도 <span class="num">1/16(6.25%)</span>이다.</p>
+        <p>게다가 12개 달을 <strong>동시에</strong> 봤다. 4년치가 있는 9개 달 중 <strong>어느 하나라도</strong> 4/4일 확률은 <span class="num">1 − (15/16)⁹ ≈ 44%</span> — 거의 절반의 확률로 그냥 생기는 일이다.</p>
+      </div>
+      <div class="card flat">
+        <p style="color:var(--ink-2)">게다가 9월 평균(<span class="num">+5.8%</span>)은 10월(<span class="num">+11.8%</span>)이나 1·3월(<span class="num">+9.8%</span>)보다 낮다. 일관성과 크기가 따로 논다.</p>
+        <p class="keypoint good" style="margin-top:14px">Q3의 답: 월별 반복 패턴은 확인되지 않았다. 분석의 실패가 아니라 분석의 결과다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide" id="s7" hidden>
+    <div class="eyebrow"><span>06 — 패턴 검증</span><span class="rule"></span></div>
+    <h2 class="stitle">요일 차이는 산포에 묻힌다</h2>
+    <figure>
+      <div class="legend">
+        <span><i class="bar" style="background:var(--up)"></i>평균 상승</span>
+        <span><i class="bar" style="background:var(--down)"></i>평균 하락</span>
+        <span><i class="rng" style="background:var(--muted)"></i>±1 표준편차</span>
+      </div>
+      <svg id="wk" viewBox="0 0 720 300" role="img" aria-label="요일별 평균 수익률과 표준편차 범위"></svg>
+      <figcaption>막대는 요일별 평균 일간 수익률, 세로선은 같은 요일 안의 ±1 표준편차. 평균 차이가 막대 높이로는 거의 보이지 않는다.</figcaption>
+    </figure>
+    <p class="keypoint calm">평균 차이는 최대 <span class="num">0.716%p</span>(월 +0.437 vs 목 −0.279)인데, 같은 요일 안의 산포는 그보다 <span class="num">1.7~4배</span> 크다. Q4의 답도 "확인되지 않았다"이다.</p>
+    <p style="color:var(--muted); font-size:13px; margin-top:12px">다만 토(<span class="num">1.202</span>)·일(<span class="num">1.968</span>)의 산포는 평일(<span class="num">2.46~2.90</span>)보다 뚜렷이 좁다 — 거래가 한산한 주말의 성질로 보이나, <strong>분산 동일성 검정은 수행하지 않았다.</strong></p>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide" id="s8" hidden>
+    <div class="eyebrow"><span>07 — 예측</span><span class="rule"></span></div>
+    <h2 class="stitle">예상은 빗나갔다</h2>
+    <p class="lede">설계 단계의 예상은 "랜덤워크에 가까워 Naive를 이기기 어렵다"였다. 수치를 예상에 맞추지 않고 그대로 싣는다.</p>
+    <div class="tscroll">
+      <table>
+        <caption>홀드아웃 2026-08-31 ~ 09-29 (30일, 실제 +6.5%) · 학습에 홀드아웃 값은 쓰지 않음</caption>
+        <thead><tr><th>모델</th><th>MAE</th><th>MAPE</th><th>방향 정확도</th></tr></thead>
+        <tbody>
+          <tr><td><span class="swatch" style="background:var(--c1)"></span>Naive</td><td class="num">3,191.70</td><td class="num">3.85%</td><td class="num">0%</td></tr>
+          <tr><td><span class="swatch" style="background:var(--c2)"></span>이동평균(7일)</td><td class="num">2,877.90</td><td class="num">3.50%</td><td class="num">70%</td></tr>
+          <tr class="win"><td><span class="swatch" style="background:var(--c3)"></span>Drift</td><td class="num">2,819.27</td><td class="num">3.42%</td><td class="num">70%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cols" style="margin-top:18px">
+      <div class="card flat"><p style="color:var(--ink-2)">세 모델의 MAPE 차이는 <strong class="num">최대 0.43%p</strong>. 단일 30일 구간에서 이 정도 차이는 실력 차라기보다 구간 선택의 운에 가깝다.</p></div>
+      <div class="card flat"><p style="color:var(--ink-2)">방향 정확도로 순위를 매기지 않는다. 이 지표는 구간 전체에 대한 <strong>단 한 번의 방향 베팅</strong>이 맞았는지를 잴 뿐이다.</p></div>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide" id="s9" hidden>
+    <div class="eyebrow"><span>08 — 예측</span><span class="rule"></span></div>
+    <h2 class="stitle">구간을 바꾸면 뒤집힌다</h2>
+    <div class="tscroll">
+      <table>
+        <caption>홀드아웃만 2026-06-01로 교체 (30일, 실제 −20.4%) · 같은 코드, 같은 모델</caption>
+        <thead><tr><th>모델</th><th>MAE</th><th>MAPE</th><th>방향 정확도</th></tr></thead>
+        <tbody>
+          <tr class="win"><td><span class="swatch" style="background:var(--c1)"></span>Naive</td><td class="num">10,578.53</td><td class="num">16.98%</td><td class="num">0%</td></tr>
+          <tr><td><span class="swatch" style="background:var(--c2)"></span>이동평균(7일)</td><td class="num">11,526.55</td><td class="num">18.49%</td><td class="num">0%</td></tr>
+          <tr><td><span class="swatch" style="background:var(--c3)"></span>Drift</td><td class="num">11,287.03</td><td class="num">18.13%</td><td class="num">0%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cols" style="margin-top:18px">
+      <div class="card">
+        <h3>왜 뒤집히는가 — 흔한 오답</h3>
+        <p style="color:var(--muted)">"Drift가 하락 추세를 연장해서 반등을 놓쳤다" — <strong style="color:var(--ink)">틀렸다.</strong></p>
+      </div>
+      <div class="card">
+        <h3>실제 메커니즘</h3>
+        <p>Drift의 기울기는 학습 구간 <strong>전체</strong>의 평균 일간 변화량이다. 전 구간이 누적 +403%로 우상향이므로 이 기울기는 <strong>항상 양수</strong>(<span class="num">+45.66/일</span> ≈ 30일 <span class="num">+1.76%</span>)다.</p>
+        <p>즉 하락 구간에서도 <strong>Drift 혼자 상승을 예측해서</strong> 진다.</p>
+      </div>
+    </div>
+    <p class="keypoint">Drift의 승리는 모델의 우수성이 아니라, 홀드아웃이 마침 그 가정에 맞았다는 사실을 반영한다.</p>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide" id="s10" hidden>
+    <div class="eyebrow"><span>09 — 대시보드</span><span class="rule"></span></div>
+    <h2 class="stitle">주장을 직접 반증해볼 수 있게</h2>
+    <p class="lede">위 결론을 글로만 쓰면 독자는 믿거나 말거나다. 홀드아웃 슬라이더를 움직이면 순위가 뒤집히는 걸 직접 본다.</p>
+    <div class="cols">
+      <div class="card">
+        <h3>조작할 수 있는 것</h3>
+        <p style="color:var(--ink-2)">분석 기간 · 이동평균 3종 · 변동성 윈도 · 홀드아웃 시작일과 길이. 기간을 바꾸면 지표를 <strong>선택 구간의 데이터만으로 다시 계산</strong>한다 — 전 구간에서 계산한 뒤 잘라 보여주지 않는다.</p>
+      </div>
+      <div class="card">
+        <h3>왜 그 구분이 중요한가</h3>
+        <p style="color:var(--ink-2)">전 구간에서 계산한 30일 이동평균을 2024년만 잘라 보면 그 값에는 2023년 데이터가 섞여 있다. 사용자가 "2024년의 30일 이동평균"을 보고 있다고 믿는 것과 다르다.</p>
+      </div>
+    </div>
+    <p class="keypoint good">대시보드의 수치와 리포트의 수치는 <strong>같은 검증된 함수</strong>에서 나온다. 홀드아웃을 2026-06-01로 맞추면 리포트에 적힌 세 값이 그대로 재현되는지를 테스트로 고정했다.</p>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide" id="s11" hidden>
+    <div class="eyebrow"><span>10 — 검증</span><span class="rule"></span></div>
+    <h2 class="stitle">AI가 만든 걸 어떻게 검증했나</h2>
+    <p class="lede">실행 결과로 AI의 사실 오류 두 건을 반증했다. 이게 이 프로젝트에서 가장 중요한 부분이다.</p>
+    <div class="obs">
+      <div class="row">
+        <div class="f">오류 ①</div>
+        <div class="w">계획서: "상수를 예측하는 모델은 방향 정확도가 구조적으로 0%". 실행 결과 이동평균은 <strong class="num">70%</strong>였다.<br><span style="color:var(--muted)">원인 — Naive만 예측값이 기준점과 정확히 같아 부호가 0이 된다. 이동평균은 최근 7일 평균이라 기준점과 달라 0이 아닌 상수 부호를 갖는다.</span></div>
+      </div>
+      <div class="row">
+        <div class="f">오류 ②</div>
+        <div class="w">리포트 초안: "Drift가 하락 추세를 연장해서 졌다". 기울기를 계산하니 <strong class="num">항상 양수(+45.66/일)</strong>였다.<br><span style="color:var(--muted)">실제로는 하락 구간에서도 혼자 상승을 예측해서 진 것이다.</span></div>
+      </div>
+      <div class="row">
+        <div class="f num">61</div>
+        <div class="w">단위 테스트. 노트북 셀은 테스트할 수 없으므로 계산을 전부 모듈로 분리했다. 덕분에 리포트·노트북·대시보드의 수치가 같은 함수에서 나온다.</div>
+      </div>
+    </div>
+    <p class="keypoint">AI 설명이 그럴듯해도 실행 결과와 대조하기 전까지 믿지 않았다.</p>
+  </section>
+
+  <!-- 12 -->
+  <section class="slide" id="s12" hidden>
+    <div class="eyebrow"><span>11 — 한계</span><span class="rule"></span></div>
+    <h2 class="stitle">이 분석이 말할 수 없는 것</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>검증이 남은 부분</h3>
+        <p>가격 움직임의 원인 가설 <span class="num">11곳</span>에 <span class="tag">(검증 필요)</span>를 달았다. AI 지식 기준일이 2026년 5월이라, <strong>−53.1% 하락장 전체가 확인 범위 밖</strong>이다.</p>
+      </div>
+      <div class="card">
+        <h3>구조적 한계</h3>
+        <p>단일 자산·단일 지표. 외부 변수(규제·거시경제·뉴스)를 전혀 반영하지 않았다. 4년이라는 표본은 계절성을 논하기에 짧다.</p>
+      </div>
+      <div class="card">
+        <h3>다음 분석</h3>
+        <p>나스닥·금과 비교하면 관찰된 성질이 비트코인 고유의 것인지 가를 수 있다. 홀드아웃을 여러 구간으로 돌려 순위 분포를 보는 것도 남아 있다.</p>
+      </div>
+    </div>
+    <p class="keypoint good">확인된 것은 추세와 변동성 집중, 확인되지 않은 것은 월별·요일별 반복 패턴. 둘 다 결과다.</p>
+    <p class="meta"><span>저장소 <a href="https://github.com/01044402345o-beep/M1-1" target="_blank" rel="noopener">github.com/01044402345o-beep/M1-1</a></span></p>
+    <p style="color:var(--muted); font-size:12.5px; margin-top:14px">본 자료는 데이터 분석 학습 산출물이며 투자 권유나 투자 조언이 아니다. Yahoo Finance 데이터는 개인적·비상업적 용도로만 사용이 허용된다.</p>
+  </section>
+
+</main>
+
+<div class="bar">
+  <div class="barin">
+    <button type="button" id="mode">전체 보기</button>
+    <div class="nav" style="display:contents">
+      <button type="button" id="prev" aria-label="이전 슬라이드">←</button>
+      <button type="button" id="next" aria-label="다음 슬라이드">→</button>
+    </div>
+    <div class="prog" aria-hidden="true"><i id="progi"></i></div>
+    <span class="count" id="count"></span>
+    <span class="hint">← → 키로 이동</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---- month grid (실제 데이터: 양수 연도 수 / 관측 연도 수) ----
+  var MONTHS=[[1,3,4],[2,2,4],[3,3,4],[4,3,4],[5,2,4],[6,2,4],[7,3,4],[8,1,4],[9,4,4],[10,2,3],[11,2,3],[12,1,3]];
+  var g=document.getElementById('mgrid');
+  MONTHS.forEach(function(m){
+    var col=document.createElement('div');
+    col.className='mcol'+(m[1]===m[2]?' hi':'');
+    var dots=document.createElement('div'); dots.className='dots';
+    for(var i=0;i<m[2];i++){
+      var d=document.createElement('div');
+      d.className='dot'+(i<m[1]?' pos':'');
+      dots.appendChild(d);
+    }
+    var frac=document.createElement('div'); frac.className='mfrac'; frac.textContent=m[1]+'/'+m[2];
+    var nm=document.createElement('div'); nm.className='mname'; nm.textContent=m[0]+'월';
+    col.appendChild(dots); col.appendChild(frac); col.appendChild(nm);
+    g.appendChild(col);
+  });
+
+  // ---- weekday chart ----
+  // 실제 산출값 (%): 평균, 표준편차
+  var WK=[['월',0.437,2.897],['화',0.000,2.464],['수',0.419,2.765],
+          ['목',-0.279,2.601],['금',0.227,2.712],['토',0.034,1.202],['일',0.196,1.968]];
+  var W=720,H=300,L=46,R=16,T=14,B=38;
+  var iw=W-L-R, ih=H-T-B;
+  var MAXV=3.2;                       // 축이 닿는 값: ±3
+  function y(v){ return T + ih/2 - (v/MAXV)*(ih/2); }
+  var step=iw/WK.length, bw=Math.min(40, step*0.42);
+  var s=[];
+  // grid + ticks
+  [-3,-2,-1,0,1,2,3].forEach(function(t){
+    var yy=y(t);
+    s.push('<line class="ax" x1="'+L+'" x2="'+(W-R)+'" y1="'+yy+'" y2="'+yy+'" opacity="'+(t===0?1:0.45)+'"/>');
+    s.push('<text class="axtext" x="'+(L-9)+'" y="'+(yy+3.5)+'" text-anchor="end">'+(t>0?'+':'')+t+'%</text>');
+  });
+  WK.forEach(function(d,i){
+    var cx=L+step*i+step/2, m=d[1], sd=d[2];
+    // ±1 표준편차 범위
+    s.push('<line x1="'+cx+'" x2="'+cx+'" y1="'+y(m-sd)+'" y2="'+y(m+sd)+'" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" opacity="0.55"/>');
+    // 평균 막대 (0 기준)
+    var top=Math.min(y(m),y(0)), hgt=Math.max(Math.abs(y(m)-y(0)),2.5);
+    s.push('<rect x="'+(cx-bw/2)+'" y="'+top+'" width="'+bw+'" height="'+hgt+'" rx="2" fill="'+(m>=0?'var(--up)':'var(--down)')+'"/>');
+    // 직접 라벨
+    s.push('<text class="lbl b" x="'+cx+'" y="'+(y(m+sd)-7)+'" text-anchor="middle">'+(m>0?'+':'')+m.toFixed(3)+'</text>');
+    s.push('<text class="lbl" x="'+cx+'" y="'+(H-B+20)+'" text-anchor="middle">'+d[0]+'</text>');
+  });
+  document.getElementById('wk').innerHTML=s.join('');
+
+  // ---- deck nav ----
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var n=slides.length, cur=0, overview=false;
+  var countEl=document.getElementById('count'), progi=document.getElementById('progi');
+  var prevB=document.getElementById('prev'), nextB=document.getElementById('next'), modeB=document.getElementById('mode');
+
+  function render(){
+    slides.forEach(function(sl,i){ sl.hidden = overview ? false : (i!==cur); });
+    countEl.textContent = overview ? (n+'장') : ((cur+1)+' / '+n);
+    progi.style.width = overview ? '100%' : (((cur+1)/n)*100)+'%';
+    prevB.disabled = cur===0; nextB.disabled = cur===n-1;
+    document.body.classList.toggle('overview', overview);
+    modeB.textContent = overview ? '한 장씩 보기' : '전체 보기';
+  }
+  function go(d){ if(overview) return; cur=Math.min(n-1,Math.max(0,cur+d)); render(); window.scrollTo({top:0,behavior:'auto'}); }
+
+  prevB.addEventListener('click',function(){go(-1)});
+  nextB.addEventListener('click',function(){go(1)});
+  modeB.addEventListener('click',function(){ overview=!overview; render(); window.scrollTo({top:0,behavior:'auto'}); });
+  document.addEventListener('keydown',function(e){
+    if(e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){ e.preventDefault(); go(1); }
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); go(-1); }
+    else if(e.key==='Home'){ e.preventDefault(); cur=0; render(); }
+    else if(e.key==='End'){ e.preventDefault(); cur=n-1; render(); }
+  });
+  render();
+})();
+</script>
+</body>
+</html>
