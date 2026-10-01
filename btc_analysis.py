@@ -183,3 +183,81 @@ def weekday_return_table(df: pd.DataFrame) -> pd.DataFrame:
     grouped = returns.groupby(returns.index.dayofweek).agg(["mean", "median", "std", "count"])
     grouped.index = [WEEKDAY_NAMES_KO[i] for i in grouped.index]
     return grouped.reindex(WEEKDAY_NAMES_KO)
+
+
+def split_tail(close: pd.Series, horizon: int = 30) -> tuple[pd.Series, pd.Series]:
+    """마지막 horizon일을 홀드아웃으로 분리한다.
+
+    학습 구간에 미래 데이터가 섞이지 않도록 시간 순서대로만 자른다.
+    """
+    if horizon >= len(close):
+        raise ValueError(f"horizon({horizon})이 데이터 길이({len(close)}) 이상이다")
+    return close.iloc[:-horizon], close.iloc[-horizon:]
+
+
+def _future_index(train: pd.Series, horizon: int) -> pd.DatetimeIndex:
+    start = train.index[-1] + pd.Timedelta(days=1)
+    return pd.date_range(start, periods=horizon, freq="D", name="Date")
+
+
+def forecast_naive(train: pd.Series, horizon: int) -> pd.Series:
+    """마지막 관측값을 그대로 유지한다. 가장 단순한 기준선이다."""
+    return pd.Series(train.iloc[-1], index=_future_index(train, horizon), name="Naive")
+
+
+def forecast_moving_average(train: pd.Series, horizon: int, window: int = 7) -> pd.Series:
+    """최근 window일 평균값을 유지한다."""
+    value = train.iloc[-window:].mean()
+    return pd.Series(value, index=_future_index(train, horizon), name=f"이동평균({window}일)")
+
+
+def forecast_drift(train: pd.Series, horizon: int) -> pd.Series:
+    """학습 구간 전체의 평균 일간 변화량을 선형으로 연장한다.
+
+    (마지막값 - 첫값) / (길이 - 1)로 구한 평균 변화량을 그대로 외삽하므로,
+    최근 구간의 추세만 보는 것이 아니라 학습 구간 전체 평균 추세를 쓴다.
+    """
+    slope = (train.iloc[-1] - train.iloc[0]) / (len(train) - 1)
+    steps = np.arange(1, horizon + 1)
+    return pd.Series(train.iloc[-1] + slope * steps, index=_future_index(train, horizon), name="Drift")
+
+
+def evaluate_forecast(actual: pd.Series, predicted: pd.Series, origin_value: float) -> dict:
+    """MAE, MAPE, 방향 정확도를 계산한다.
+
+    방향 정확도는 예측 시작 시점(origin_value) 대비 상승/하락 부호가
+    실제와 일치한 비율이다. 상수 예측(Naive, 이동평균)은 부호가 0이 되어
+    구조적으로 0%가 나온다. 이는 버그가 아니라 '단순 베이스라인은 방향을
+    주장하지 않는다'는 사실을 드러내는 결과이며, 리포트에 그렇게 서술한다.
+    """
+    error = (actual - predicted).abs()
+    mae = float(error.mean())
+    mape = float((error / actual.abs()).mean() * 100)
+
+    actual_direction = np.sign(actual - origin_value)
+    predicted_direction = np.sign(predicted - origin_value)
+    direction_accuracy = float((actual_direction == predicted_direction).mean() * 100)
+
+    return {"mae": mae, "mape": mape, "direction_accuracy": direction_accuracy}
+
+
+def run_baselines(close: pd.Series, horizon: int = 30) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """3개 베이스라인을 학습·예측·평가해 (예측값 표, 평가 표)를 돌려준다."""
+    train, test = split_tail(close, horizon)
+    origin = float(train.iloc[-1])
+
+    forecasts = [
+        forecast_naive(train, horizon),
+        forecast_moving_average(train, horizon, window=7),
+        forecast_drift(train, horizon),
+    ]
+
+    predictions = pd.DataFrame({"actual": test.values}, index=test.index)
+    scores = {}
+    for forecast in forecasts:
+        aligned = pd.Series(forecast.values, index=test.index, name=forecast.name)
+        predictions[forecast.name] = aligned
+        scores[forecast.name] = evaluate_forecast(test, aligned, origin)
+
+    score_table = pd.DataFrame(scores).T[["mae", "mape", "direction_accuracy"]]
+    return predictions, score_table

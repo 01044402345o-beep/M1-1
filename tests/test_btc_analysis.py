@@ -261,3 +261,97 @@ def test_weekday_return_table_aggregates_correct_weekday():
     assert table.loc["월", "count"] == 2
     assert table.loc["월", "mean"] == pytest.approx(0.10)
     assert table.loc["화", "mean"] == pytest.approx(0.0)  # 다른 요일은 변화 없음
+
+
+def _close(n, start=100.0, step=1.0):
+    dates = pd.date_range("2023-01-01", periods=n, freq="D")
+    return pd.Series(start + step * np.arange(n), index=dates, name="Close")
+
+
+def test_split_tail_separates_last_n_days():
+    close = _close(100)
+
+    train, test = ba.split_tail(close, horizon=30)
+
+    assert len(train) == 70
+    assert len(test) == 30
+    assert train.index.max() < test.index.min()  # 미래 데이터 누수 없음
+
+
+def test_split_tail_raises_when_horizon_too_large():
+    close = _close(10)
+
+    with pytest.raises(ValueError):
+        ba.split_tail(close, horizon=10)
+
+
+def test_forecast_naive_repeats_last_value():
+    train = _close(50)  # 마지막 값 149.0
+
+    pred = ba.forecast_naive(train, horizon=5)
+
+    assert len(pred) == 5
+    assert (pred == 149.0).all()
+    assert pred.index[0] == train.index[-1] + pd.Timedelta(days=1)
+
+
+def test_forecast_moving_average_repeats_window_mean():
+    train = _close(50)
+
+    pred = ba.forecast_moving_average(train, horizon=3, window=7)
+
+    assert pred.iloc[0] == pytest.approx(train.iloc[-7:].mean())
+    assert pred.nunique() == 1  # 상수 예측
+
+
+def test_forecast_drift_extends_average_slope():
+    train = _close(50, step=2.0)  # 하루 +2.0 추세
+
+    pred = ba.forecast_drift(train, horizon=3)
+
+    assert pred.iloc[0] == pytest.approx(train.iloc[-1] + 2.0)
+    assert pred.iloc[2] == pytest.approx(train.iloc[-1] + 6.0)
+
+
+def test_evaluate_forecast_computes_mae_and_mape():
+    idx = pd.date_range("2023-01-01", periods=2, freq="D")
+    actual = pd.Series([100.0, 200.0], index=idx)
+    predicted = pd.Series([110.0, 180.0], index=idx)
+
+    result = ba.evaluate_forecast(actual, predicted, origin_value=100.0)
+
+    assert result["mae"] == pytest.approx(15.0)       # (10 + 20) / 2
+    assert result["mape"] == pytest.approx(10.0)      # (10% + 10%) / 2
+
+
+def test_evaluate_forecast_direction_accuracy_counts_matching_sign():
+    idx = pd.date_range("2023-01-01", periods=2, freq="D")
+    actual = pd.Series([110.0, 90.0], index=idx)      # 기준 100 대비 상승, 하락
+    predicted = pd.Series([105.0, 95.0], index=idx)   # 상승, 하락 → 둘 다 맞음
+
+    result = ba.evaluate_forecast(actual, predicted, origin_value=100.0)
+
+    assert result["direction_accuracy"] == pytest.approx(100.0)
+
+
+def test_evaluate_forecast_flat_prediction_has_zero_direction_accuracy():
+    # 상수 예측은 방향을 주장하지 않으므로 구조적으로 0이 된다.
+    # 이 성질 자체를 리포트에서 베이스라인의 한계로 서술한다.
+    idx = pd.date_range("2023-01-01", periods=2, freq="D")
+    actual = pd.Series([110.0, 90.0], index=idx)
+    predicted = pd.Series([100.0, 100.0], index=idx)
+
+    result = ba.evaluate_forecast(actual, predicted, origin_value=100.0)
+
+    assert result["direction_accuracy"] == pytest.approx(0.0)
+
+
+def test_run_baselines_returns_three_models():
+    close = _close(120)
+
+    preds, scores = ba.run_baselines(close, horizon=30)
+
+    assert list(scores.index) == ["Naive", "이동평균(7일)", "Drift"]
+    assert list(scores.columns) == ["mae", "mape", "direction_accuracy"]
+    assert list(preds.columns) == ["actual", "Naive", "이동평균(7일)", "Drift"]
+    assert len(preds) == 30
