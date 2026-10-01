@@ -211,3 +211,53 @@ def test_max_drawdown_finds_largest_peak_to_trough():
     assert result["mdd"] == pytest.approx(-0.50)  # 150 -> 75
     assert result["peak_date"] == pd.Timestamp("2023-01-02")
     assert result["trough_date"] == pd.Timestamp("2023-01-03")
+
+
+def test_monthly_return_pivot_compounds_within_month():
+    # 1월에 +10%, +10% → 복리 21%
+    dates = ["2023-01-01", "2023-01-02", "2023-01-03"]
+    df = ba.add_returns(ba.fill_prices(make_df(dates, [100.0, 110.0, 121.0])))
+
+    pivot = ba.monthly_return_pivot(df)
+
+    assert pivot.loc[2023, 1] == pytest.approx(0.21)
+
+
+def test_monthly_return_pivot_separates_years_and_months():
+    dates = ["2023-01-01", "2023-01-02", "2023-02-01", "2024-01-01", "2024-01-02"]
+    close = [100.0, 110.0, 110.0, 110.0, 99.0]
+    df = ba.add_returns(ba.fill_prices(make_df(dates, close)))
+
+    pivot = ba.monthly_return_pivot(df)
+
+    assert set(pivot.index) == {2023, 2024}
+    assert pivot.loc[2023, 1] == pytest.approx(0.10)
+    assert pivot.loc[2024, 1] == pytest.approx(-0.10)
+
+
+def test_weekday_return_table_has_seven_rows_in_week_order():
+    dates = pd.date_range("2023-01-02", periods=28, freq="D")  # 2023-01-02는 월요일
+    rng = np.random.default_rng(1)
+    close = 100 * np.cumprod(1 + rng.normal(0, 0.01, 28))
+    df = ba.add_returns(ba.fill_prices(make_df(dates, close)))
+
+    table = ba.weekday_return_table(df)
+
+    assert list(table.index) == ["월", "화", "수", "목", "금", "토", "일"]
+    assert list(table.columns) == ["mean", "median", "std", "count"]
+
+
+def test_weekday_return_table_aggregates_correct_weekday():
+    # 2023-01-01은 일요일. 범위 01-01~01-15 안의 월요일은 01-02와 01-09 두 번뿐이고,
+    # 그 두 날에만 +10% 수익률이 생기도록 구성한다.
+    dates = pd.date_range("2023-01-01", periods=15, freq="D")
+    close = np.full(15, 100.0)
+    close[1:] = 110.0   # 01-02(월) +10%
+    close[8:] = 121.0   # 01-09(월) +10%
+    df = ba.add_returns(ba.fill_prices(make_df(dates, close)))
+
+    table = ba.weekday_return_table(df)
+
+    assert table.loc["월", "count"] == 2
+    assert table.loc["월", "mean"] == pytest.approx(0.10)
+    assert table.loc["화", "mean"] == pytest.approx(0.0)  # 다른 요일은 변화 없음

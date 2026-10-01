@@ -153,3 +153,33 @@ def max_drawdown(close: pd.Series) -> dict:
         "peak_date": peak_date,
         "trough_date": trough_date,
     }
+
+
+WEEKDAY_NAMES_KO = ["월", "화", "수", "목", "금", "토", "일"]
+
+
+def monthly_return_pivot(df: pd.DataFrame) -> pd.DataFrame:
+    """연도 x 월 형태의 월별 복리 수익률 표를 만든다.
+
+    단순 평균이 아니라 복리로 묶는 이유: 월 수익률은 일별 수익률의 곱으로
+    정의되며, 평균을 쓰면 실제 월간 변화와 값이 달라진다.
+    """
+    returns = df["daily_return"].dropna()
+    monthly = returns.groupby([returns.index.year, returns.index.month]).apply(
+        lambda s: (1.0 + s).prod() - 1.0
+    )
+    monthly.index.names = ["year", "month"]
+    return monthly.unstack("month")
+
+
+def weekday_return_table(df: pd.DataFrame) -> pd.DataFrame:
+    """요일별 수익률 통계표를 만든다.
+
+    평균만 보면 소수의 극단값에 끌려가므로 중앙값과 표준편차를 함께 낸다.
+    비트코인은 연중무휴 거래되므로 주말 행이 비지 않는다 — 주식으로는
+    불가능한 분석이다.
+    """
+    returns = df["daily_return"].dropna()
+    grouped = returns.groupby(returns.index.dayofweek).agg(["mean", "median", "std", "count"])
+    grouped.index = [WEEKDAY_NAMES_KO[i] for i in grouped.index]
+    return grouped.reindex(WEEKDAY_NAMES_KO)
