@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>비트코인 1,368일 — 자료실</title>
+<meta name="description" content="2023-2026 비트코인 시계열 분석 프로젝트의 발표 자료와 대시보드 스크린샷">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@700&display=swap">
+<style>
+  :root{
+    --ground:#f7f6f2; --surface:#fffefb; --ink:#1b1a17; --ink-2:#44423c;
+    --muted:#6e6b63; --line:#e0ddd4; --up:#e34948; --down:#2a78d6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#141419; --surface:#1d1d23; --ink:#f0efec; --ink-2:#cfccc5;
+      --muted:#9b978e; --line:#30303a;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#141419; --surface:#1d1d23; --ink:#f0efec; --ink-2:#cfccc5;
+    --muted:#9b978e; --line:#30303a;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:"IBM Plex Sans KR", system-ui, "Malgun Gothic", sans-serif;
+    font-size:15px; line-height:1.65;
+  }
+  .wrap{max-width:720px; margin:0 auto; padding-inline:16px; padding-block:56px 48px}
+  .eyebrow{font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:14px}
+  h1{font-family:"Noto Serif KR",serif; font-weight:700; font-size:clamp(30px,7vw,46px);
+     letter-spacing:-.015em; line-height:1.25; margin:0 0 12px; text-wrap:balance}
+  .sub{color:var(--ink-2); max-width:56ch; margin:0 0 34px}
+  .num{font-variant-numeric:tabular-nums}
+  .stats{display:flex; gap:10px 26px; flex-wrap:wrap; margin:0 0 34px; padding:0; list-style:none}
+  .stats li{font-size:13.5px; color:var(--muted); white-space:nowrap}
+  .stats b{display:block; font-family:"Noto Serif KR",serif; font-size:24px; line-height:1.2; color:var(--ink)}
+  .stats b.up{color:var(--up)} .stats b.down{color:var(--down)}
+  .links{display:grid; gap:12px; margin:0 0 30px}
+  a.card{
+    display:block; text-decoration:none; color:inherit;
+    background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px 18px;
+  }
+  a.card:hover{border-color:var(--muted)}
+  a.card:focus-visible{outline:2px solid var(--down); outline-offset:2px}
+  a.card .t{font-weight:600; margin-bottom:3px}
+  a.card .d{font-size:13.5px; color:var(--muted)}
+  .foot{border-top:1px solid var(--line); padding-top:18px; font-size:12.5px; color:var(--muted)}
+  .foot a{color:var(--down)}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">시계열 분석 프로젝트 · 2026-10-01</p>
+  <h1>비트코인 1,368일</h1>
+  <p class="sub">2023-01-01부터 2026-09-29까지의 일봉으로 추세·변동성·반복 패턴을 검증하고,
+    가장 단순한 예측을 이길 수 있는지 실험한 프로젝트의 자료실입니다.</p>
+
+  <ul class="stats">
+    <li><b class="up num">+403.0%</b>기간 누적 수익률</li>
+    <li><b class="down num">−53.1%</b>최대 낙폭</li>
+    <li><b class="num">61</b>검증 테스트</li>
+  </ul>
+
+  <div class="links">
+    <a class="card" href="slides/">
+      <div class="t">발표 슬라이드 12장 →</div>
+      <div class="d">← → 키로 넘기고, ‘전체 보기’로 한 문서처럼 읽을 수 있습니다</div>
+    </a>
+    <a class="card" href="https://github.com/01044402345o-beep/M1-1/blob/main/docs/dashboard/README.md">
+      <div class="t">대시보드 시나리오와 스크린샷 →</div>
+      <div class="d">기간·조건을 바꿔가며 탐색하는 Streamlit 대시보드의 장면별 설명</div>
+    </a>
+    <a class="card" href="https://github.com/01044402345o-beep/M1-1">
+      <div class="t">저장소 — 코드·리포트·노트북 →</div>
+      <div class="d">REPORT.md, analysis.ipynb, btc_analysis.py와 테스트 61개</div>
+    </a>
+  </div>
+
+  <p class="foot">본 자료는 데이터 분석 학습 산출물이며 투자 권유나 투자 조언이 아닙니다.
+    데이터 출처는 <a href="https://finance.yahoo.com" rel="noopener">Yahoo Finance</a>이며
+    개인적·비상업적 용도로만 사용이 허용됩니다.</p>
+</main>
+</body>
+</html>

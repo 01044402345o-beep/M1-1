@@ -75,11 +75,20 @@ http://localhost:8501/?start=2024-01-01&end=2024-12-31&ma1=5&ma2=20&ma3=60&holdo
 
 ## 발표 슬라이드
 
-분석 결과를 12장으로 정리한 발표 자료: [`docs/slides/index.html`](docs/slides/index.html)
+분석 결과를 12장으로 정리한 발표 자료다. `←` `→` 키로 넘기고, `전체 보기` 버튼을
+누르면 12장을 한 문서로 펼쳐 읽거나 인쇄할 수 있다. 수치는 모두 `analysis.ipynb`
+실행 출력과 `btc_analysis.py` 함수 산출값에서 가져왔다.
 
-브라우저로 파일을 열면 된다. `←` `→` 키로 넘기고, `전체 보기` 버튼을 누르면 12장을
-한 문서로 펼쳐 읽거나 인쇄할 수 있다. 수치는 모두 `analysis.ipynb` 실행 출력과
-`btc_analysis.py` 함수 산출값에서 가져왔다.
+**바로 보기 → https://01044402345o-beep.github.io/M1-1/slides/**
+
+GitHub은 저장소 안의 HTML을 소스 코드로만 보여주므로, 위 주소(GitHub Pages)로
+열어야 슬라이드가 렌더링된다. 내려받아 브라우저로 여는 것도 똑같이 동작한다 —
+외부 의존성은 구글 웹폰트뿐이고 데이터와 차트는 파일 안에 들어 있다.
+
+| 경로 | 내용 |
+| --- | --- |
+| [`docs/index.html`](docs/index.html) | 자료실 첫 화면 ([열기](https://01044402345o-beep.github.io/M1-1/)) |
+| [`docs/slides/index.html`](docs/slides/index.html) | 발표 슬라이드 12장 |
 
 ## 설계 원칙
 
