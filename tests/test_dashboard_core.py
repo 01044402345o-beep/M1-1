@@ -102,3 +102,93 @@ def test_recompute_indicators_short_slice_leaves_indicators_empty():
 
     assert out["ma_30"].isna().all()
     assert out["vol_30"].isna().all()
+
+
+def test_summarize_period_reports_known_values():
+    df = make_prices(pd.date_range("2023-01-01", periods=5, freq="D"),
+                     [100.0, 150.0, 75.0, 120.0, 130.0])
+    out = dc.recompute_indicators(df, ma_windows=(2,), vol_window=3)
+
+    s = dc.summarize_period(out, vol_window=3)
+
+    assert s["n_days"] == 5
+    assert s["cum_return"] == pytest.approx(0.30)        # 100 -> 130
+    assert s["mdd"] == pytest.approx(-0.50)              # 150 -> 75
+    assert s["mdd_peak"] == pd.Timestamp("2023-01-02")
+    assert s["mdd_trough"] == pd.Timestamp("2023-01-03")
+
+
+def test_summarize_period_counts_outliers_by_direction():
+    dates = pd.date_range("2023-01-01", periods=60, freq="D")
+    close = 100.0 * np.cumprod(np.full(60, 1.001))
+    close[30] = close[29] * 1.30   # 상승 이상치
+    close[31:] = close[30] * np.cumprod(np.full(29, 1.001))
+    close[45] = close[44] * 0.75   # 하락 이상치
+    close[46:] = close[45] * np.cumprod(np.full(14, 1.001))
+    out = dc.recompute_indicators(make_prices(dates, close), ma_windows=(5,), vol_window=10)
+
+    s = dc.summarize_period(out, vol_window=10)
+
+    assert s["outlier_up"] >= 1
+    assert s["outlier_down"] >= 1
+    assert s["outlier_up"] + s["outlier_down"] == len(
+        ba.detect_return_outliers(out, z_threshold=3.0)
+    )
+
+
+def test_summarize_period_rejects_empty_frame():
+    with pytest.raises(ValueError):
+        dc.summarize_period(pd.DataFrame(), vol_window=2)
+
+
+def test_evaluate_holdout_window_selects_the_requested_window():
+    close = pd.Series(
+        np.arange(100.0, 200.0),
+        index=pd.date_range("2023-01-01", periods=100, freq="D"),
+        name="Close",
+    )
+
+    preds, scores = dc.evaluate_holdout_window(close, "2023-03-01", horizon=10)
+
+    assert preds.index.min() == pd.Timestamp("2023-03-01")
+    assert preds.index.max() == pd.Timestamp("2023-03-10")
+    assert len(preds) == 10
+    assert list(scores.index) == ["Naive", "이동평균(7일)", "Drift"]
+
+
+def test_evaluate_holdout_window_rejects_too_short_training():
+    close = pd.Series(
+        np.arange(100.0, 110.0),
+        index=pd.date_range("2023-01-01", periods=10, freq="D"),
+        name="Close",
+    )
+
+    # 홀드아웃이 2일차에 시작하면 학습 구간이 1일뿐 -> forecast_drift 가 0 으로 나눈다
+    with pytest.raises(ValueError):
+        dc.evaluate_holdout_window(close, "2023-01-02", horizon=5)
+
+
+def test_evaluate_holdout_window_rejects_window_past_data_end():
+    close = pd.Series(
+        np.arange(100.0, 110.0),
+        index=pd.date_range("2023-01-01", periods=10, freq="D"),
+        name="Close",
+    )
+
+    with pytest.raises(ValueError):
+        dc.evaluate_holdout_window(close, "2023-01-08", horizon=10)
+
+
+def test_evaluate_holdout_window_reproduces_report_counterfactual():
+    """REPORT.md 7.4절에 기록된 2026-06 반사실 수치를 독립 경로로 재현한다.
+
+    대시보드가 리포트와 같은 계산을 하고 있다는 고정점이다.
+    """
+    df = dc.load_prepared(CSV_PATH)
+
+    _, scores = dc.evaluate_holdout_window(df["Close"], "2026-06-01", horizon=30)
+
+    assert scores.loc["Naive", "mae"] == pytest.approx(10578.53, abs=0.01)
+    assert scores.loc["Drift", "mae"] == pytest.approx(11287.03, abs=0.01)
+    assert scores.loc["이동평균(7일)", "mae"] == pytest.approx(11526.55, abs=0.01)
+    assert scores["mae"].idxmin() == "Naive"

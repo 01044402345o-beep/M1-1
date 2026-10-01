@@ -46,3 +46,54 @@ def recompute_indicators(
     out = ba.add_returns(df)
     out = ba.add_moving_averages(out, windows=tuple(ma_windows))
     return ba.add_volatility(out, window=vol_window)
+
+
+MIN_TRAIN_DAYS = 2  # forecast_drift 의 기울기가 (마지막-첫값)/(길이-1) 이라 1일이면 0으로 나눈다
+
+
+def summarize_period(df: pd.DataFrame, vol_window: int) -> dict:
+    """선택 구간의 요약 통계를 돌려준다."""
+    if df.empty:
+        raise ValueError("빈 구간은 요약할 수 없다")
+
+    outliers = ba.detect_return_outliers(df, z_threshold=3.0)
+    drawdown = ba.max_drawdown(df["Close"])
+    vol_col = f"vol_{vol_window}"
+
+    return {
+        "n_days": int(len(df)),
+        "cum_return": float(df["cum_return"].iloc[-1]),
+        "mdd": float(drawdown["mdd"]),
+        "mdd_peak": drawdown["peak_date"],
+        "mdd_trough": drawdown["trough_date"],
+        "vol_mean": float(df[vol_col].mean()) if vol_col in df else float("nan"),
+        "outlier_down": int((outliers["daily_return"] < 0).sum()),
+        "outlier_up": int((outliers["daily_return"] > 0).sum()),
+    }
+
+
+def evaluate_holdout_window(
+    close: pd.Series, holdout_start, horizon: int
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """임의 시작일의 홀드아웃으로 베이스라인 3종을 재평가한다.
+
+    `run_baselines` 는 시리즈의 마지막 horizon 일을 홀드아웃으로 자른다. 따라서
+    종가를 holdout_start + horizon - 1 까지 잘라서 넘기면 그 구간이 자동으로
+    "마지막 horizon 일"이 된다. REPORT.md 7.4절의 반사실 검증과 같은 절차다.
+    """
+    holdout_start = pd.Timestamp(holdout_start)
+    holdout_end = holdout_start + pd.Timedelta(days=horizon - 1)
+
+    if holdout_end > close.index.max():
+        raise ValueError(
+            f"홀드아웃 종료일 {holdout_end.date()} 가 데이터 끝 {close.index.max().date()} 를 넘는다"
+        )
+
+    truncated = close.loc[:holdout_end]
+    train_days = len(truncated) - horizon
+    if train_days < MIN_TRAIN_DAYS:
+        raise ValueError(
+            f"학습 구간이 {train_days}일뿐이다. 최소 {MIN_TRAIN_DAYS}일이 필요하다"
+        )
+
+    return ba.run_baselines(truncated, horizon=horizon)
