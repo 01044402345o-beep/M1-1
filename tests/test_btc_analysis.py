@@ -130,6 +130,7 @@ def test_add_returns_computes_pct_change():
     assert np.isnan(out["daily_return"].iloc[0])  # 첫날은 직전값이 없다
     assert out["daily_return"].iloc[1] == pytest.approx(0.10)
     assert out["daily_return"].iloc[2] == pytest.approx(-0.10)
+    assert out["cum_return"].iloc[2] == pytest.approx(-0.01)
 
 
 def test_add_returns_excludes_filled_days_and_next_day():
@@ -194,11 +195,11 @@ def test_detect_return_outliers_finds_extreme_day():
 def test_detect_return_outliers_does_not_modify_input():
     dates = pd.date_range("2023-01-01", periods=40, freq="D")
     df = ba.add_returns(ba.fill_prices(make_df(dates, np.linspace(100, 140, 40))))
-    before = len(df)
+    before = df.copy()
 
     ba.detect_return_outliers(df)
 
-    assert len(df) == before  # 탐지는 제거가 아니다
+    pd.testing.assert_frame_equal(df, before)  # 탐지는 제거가 아니다 — 입력을 전혀 바꾸지 않는다
 
 
 def test_max_drawdown_finds_largest_peak_to_trough():
@@ -311,6 +312,24 @@ def test_forecast_drift_extends_average_slope():
 
     assert pred.iloc[0] == pytest.approx(train.iloc[-1] + 2.0)
     assert pred.iloc[2] == pytest.approx(train.iloc[-1] + 6.0)
+
+
+def test_forecast_drift_uses_whole_training_average_not_recent_window():
+    # 초반에 급등한 뒤(100 -> 200 -> 300) 나머지 구간은 완전히 평평하다(300 유지, 8일).
+    # 총 11개 값: [100, 200, 300, 300, 300, 300, 300, 300, 300, 300, 300]
+    # 최근 구간(예: 마지막 7일)의 기울기는 0이지만, 학습 구간 전체 평균 기울기는
+    # (300 - 100) / (11 - 1) = 20.0 이다. 두 정의가 다른 값을 내는 픽스처이므로,
+    # forecast_drift가 "최근 구간"이 아니라 "학습 구간 전체" 평균을 쓴다는 것을 이 테스트가
+    # 직접 가른다 — 최근 구간 기울기(0)를 쓰도록 구현이 바뀌면 이 테스트는 실패한다.
+    dates = pd.date_range("2023-01-01", periods=11, freq="D")
+    values = [100.0, 200.0] + [300.0] * 9
+    train = pd.Series(values, index=dates, name="Close")
+
+    pred = ba.forecast_drift(train, horizon=3)
+
+    # 손계산: slope = (300.0 - 100.0) / (11 - 1) = 20.0
+    assert pred.iloc[0] == pytest.approx(train.iloc[-1] + 20.0)  # 300 + 20*1 = 320
+    assert pred.iloc[2] == pytest.approx(train.iloc[-1] + 60.0)  # 300 + 20*3 = 360
 
 
 def test_evaluate_forecast_computes_mae_and_mape():

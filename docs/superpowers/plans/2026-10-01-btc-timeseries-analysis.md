@@ -1014,6 +1014,9 @@ def forecast_moving_average(train: pd.Series, horizon: int, window: int = 7) -> 
 
 def forecast_drift(train: pd.Series, horizon: int) -> pd.Series:
     """최근 추세의 평균 변화량을 선형 연장한다."""
+    # [구현 노트, 2026-10-01 최종 리뷰 반영: 위 docstring은 계획 당시 문구이며, 실제 구현과
+    # REPORT.md는 "최근 추세"가 아니라 "학습 구간 전체"의 평균 일간 변화량을 선형 연장한다고
+    # 기술한다 — 아래 slope 계산이 실제로 쓰는 구간이 학습 구간 전체임을 보면 알 수 있다.]
     slope = (train.iloc[-1] - train.iloc[0]) / (len(train) - 1)
     steps = np.arange(1, horizon + 1)
     return pd.Series(train.iloc[-1] + slope * steps, index=_future_index(train, horizon), name="Drift")
