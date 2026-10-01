@@ -119,3 +119,95 @@ def test_fill_prices_forward_fills_and_marks():
     assert bool(out.loc["2023-01-02", "is_filled"]) is True
     assert bool(out.loc["2023-01-01", "is_filled"]) is False
     assert out["Close"].isna().sum() == 0
+
+
+def test_add_returns_computes_pct_change():
+    df = make_df(["2023-01-01", "2023-01-02", "2023-01-03"], [100.0, 110.0, 99.0])
+    df = ba.fill_prices(df)
+
+    out = ba.add_returns(df)
+
+    assert np.isnan(out["daily_return"].iloc[0])  # 첫날은 직전값이 없다
+    assert out["daily_return"].iloc[1] == pytest.approx(0.10)
+    assert out["daily_return"].iloc[2] == pytest.approx(-0.10)
+
+
+def test_add_returns_excludes_filled_days_and_next_day():
+    # 01-02가 보간된 경우: 01-02와 01-03의 수익률은 모두 신뢰할 수 없다
+    df = make_df(["2023-01-01", "2023-01-03"], [100.0, 120.0])
+    df, _ = ba.reindex_daily(df)
+    df = ba.fill_prices(df)
+
+    out = ba.add_returns(df)
+
+    assert np.isnan(out.loc["2023-01-02", "daily_return"])
+    assert np.isnan(out.loc["2023-01-03", "daily_return"])
+
+
+def test_add_returns_cumulative_is_monotonic_for_rising_prices():
+    df = make_df(["2023-01-01", "2023-01-02", "2023-01-03"], [100.0, 110.0, 121.0])
+    df = ba.fill_prices(df)
+
+    out = ba.add_returns(df)
+
+    assert out["cum_return"].iloc[0] == pytest.approx(0.0)
+    assert out["cum_return"].iloc[2] == pytest.approx(0.21)
+
+
+def test_add_moving_averages_creates_expected_columns():
+    dates = pd.date_range("2023-01-01", periods=100, freq="D")
+    df = ba.fill_prices(make_df(dates, np.arange(100, 200, dtype=float)))
+
+    out = ba.add_moving_averages(df, windows=(7, 30, 90))
+
+    assert {"ma_7", "ma_30", "ma_90"} <= set(out.columns)
+    assert np.isnan(out["ma_7"].iloc[5])  # 윈도우가 안 찬 구간
+    assert out["ma_7"].iloc[6] == pytest.approx(np.mean(np.arange(100, 107)))
+
+
+def test_add_volatility_is_annualized_with_365():
+    dates = pd.date_range("2023-01-01", periods=60, freq="D")
+    rng = np.random.default_rng(0)
+    close = 100 * np.cumprod(1 + rng.normal(0, 0.02, 60))
+    df = ba.add_returns(ba.fill_prices(make_df(dates, close)))
+
+    out = ba.add_volatility(df, window=30)
+
+    expected = out["daily_return"].rolling(30).std().iloc[-1] * np.sqrt(365)
+    assert out["vol_30"].iloc[-1] == pytest.approx(expected)
+    assert np.isnan(out["vol_30"].iloc[10])
+
+
+def test_detect_return_outliers_finds_extreme_day():
+    dates = pd.date_range("2023-01-01", periods=60, freq="D")
+    close = np.full(60, 100.0)
+    close[1:] = 100.0 * np.cumprod(np.full(59, 1.001))
+    close[30] = close[29] * 1.30  # +30% 하루
+    close[31:] = close[30] * np.cumprod(np.full(29, 1.001))
+    df = ba.add_returns(ba.fill_prices(make_df(dates, close)))
+
+    out = ba.detect_return_outliers(df, z_threshold=3.0)
+
+    assert dates[30] in out.index
+
+
+def test_detect_return_outliers_does_not_modify_input():
+    dates = pd.date_range("2023-01-01", periods=40, freq="D")
+    df = ba.add_returns(ba.fill_prices(make_df(dates, np.linspace(100, 140, 40))))
+    before = len(df)
+
+    ba.detect_return_outliers(df)
+
+    assert len(df) == before  # 탐지는 제거가 아니다
+
+
+def test_max_drawdown_finds_largest_peak_to_trough():
+    dates = pd.date_range("2023-01-01", periods=5, freq="D")
+    close = [100.0, 150.0, 75.0, 120.0, 130.0]
+    df = ba.fill_prices(make_df(dates, close))
+
+    result = ba.max_drawdown(df["Close"])
+
+    assert result["mdd"] == pytest.approx(-0.50)  # 150 -> 75
+    assert result["peak_date"] == pd.Timestamp("2023-01-02")
+    assert result["trough_date"] == pd.Timestamp("2023-01-03")

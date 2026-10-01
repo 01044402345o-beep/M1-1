@@ -81,3 +81,75 @@ def fill_prices(df: pd.DataFrame) -> pd.DataFrame:
     out["is_filled"] = out["Close"].isna()
     out[PRICE_COLUMNS] = out[PRICE_COLUMNS].ffill()
     return out
+
+
+ANNUALIZATION_DAYS = 365  # 비트코인은 연중무휴 거래되므로 주식의 252가 아니다
+
+
+def add_returns(df: pd.DataFrame) -> pd.DataFrame:
+    """일별 변화율과 누적 수익률을 추가한다.
+
+    보간된 날짜(is_filled)와 그 다음 날의 수익률은 NaN으로 둔다.
+    보간된 가격이 관여한 변화율은 실제 시장 움직임이 아니기 때문이다.
+    """
+    out = df.copy()
+    returns = out["Close"].pct_change(fill_method=None)
+
+    # is_filled.shift(1)은 첫 행에 NaN을 만들어 object dtype이 될 수 있지만,
+    # bool 컬럼인 is_filled와 `|` 연산을 거치면 다시 bool dtype으로 수렴한다
+    # (pandas 3.0.3에서 확인함). 따라서 별도의 .astype(bool) 가드는 불필요하다.
+    unreliable = out["is_filled"] | out["is_filled"].shift(1).fillna(False)
+    returns[unreliable] = np.nan
+    out["daily_return"] = returns
+
+    # 누적 계산에서는 결측을 '변화 없음'으로 간주해 구간을 이어붙인다.
+    out["cum_return"] = (1.0 + returns.fillna(0.0)).cumprod() - 1.0
+    return out
+
+
+def add_moving_averages(df: pd.DataFrame, windows: tuple[int, ...] = (7, 30, 90)) -> pd.DataFrame:
+    """종가 이동평균을 추가한다. 단기 노이즈를 걷어내 추세를 분리하기 위한 것이다."""
+    out = df.copy()
+    for window in windows:
+        out[f"ma_{window}"] = out["Close"].rolling(window).mean()
+    return out
+
+
+def add_volatility(df: pd.DataFrame, window: int = 30) -> pd.DataFrame:
+    """롤링 표준편차를 연율화해 변동성 컬럼을 추가한다."""
+    out = df.copy()
+    out[f"vol_{window}"] = out["daily_return"].rolling(window).std() * np.sqrt(ANNUALIZATION_DAYS)
+    return out
+
+
+def detect_return_outliers(df: pd.DataFrame, z_threshold: float = 3.0) -> pd.DataFrame:
+    """일별 수익률이 ±z_threshold 표준편차를 벗어난 날을 찾는다.
+
+    탐지만 한다. 제거하지 않는다. 비트코인의 급변동은 측정 오류가 아니라
+    분석 대상 신호이므로, 제거하면 변동성 분석의 목적 자체가 훼손된다.
+    """
+    returns = df["daily_return"]
+    z_score = (returns - returns.mean()) / returns.std()
+    mask = z_score.abs() > z_threshold
+
+    result = df.loc[mask.fillna(False), ["Close", "daily_return"]].copy()
+    result["z_score"] = z_score[mask.fillna(False)]
+    return result
+
+
+def max_drawdown(close: pd.Series) -> dict:
+    """최대 낙폭과 그 고점·저점 날짜를 돌려준다.
+
+    하락 리스크의 규모를 단일 수치로 요약하기 위한 지표다.
+    """
+    running_max = close.cummax()
+    drawdown = close / running_max - 1.0
+
+    trough_date = drawdown.idxmin()
+    peak_date = close.loc[:trough_date].idxmax()
+
+    return {
+        "mdd": float(drawdown.min()),
+        "peak_date": peak_date,
+        "trough_date": trough_date,
+    }
