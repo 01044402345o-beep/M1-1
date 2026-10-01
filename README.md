@@ -25,7 +25,7 @@
 │   ├── 03_monthly_heatmap.png
 │   ├── 04_weekday_boxplot.png
 │   └── 05_baseline_forecast.png
-├── tests/                     # btc_analysis.py / plots.py 검증 테스트 35개
+├── tests/                     # btc_analysis.py / plots.py 검증 테스트 36개
 │   ├── test_btc_analysis.py
 │   └── test_plots.py
 └── docs/superpowers/           # 코딩 전에 작성한 설계 스펙·구현 계획 문서
@@ -42,7 +42,7 @@ pip install -r requirements.txt
 # 2. 데이터 수집 (data/ 에 CSV가 이미 있으므로 생략 가능)
 python fetch_data.py
 
-# 3. 테스트 실행 (계산 로직 검증, 35개)
+# 3. 테스트 실행 (계산 로직 검증, 36개)
 python -m pytest tests/ -q
 
 # 4. 분석 노트북 실행
@@ -59,7 +59,7 @@ python -m jupyter nbconvert --to notebook --execute --inplace analysis.ipynb
 - **수집과 분석 분리**: 노트북이 매번 데이터를 새로 받으면 실행 시점에 따라 결과가 달라진다.
   `fetch_data.py`로 한 번만 받아 CSV로 고정해 두었기 때문에, 노트북은 언제 실행해도 같은 결과를 낸다.
 - **계산 로직은 테스트된 모듈에만**: 노트북 셀 안의 계산식은 단위 테스트를 할 수 없다.
-  그래서 모든 계산을 `btc_analysis.py`에 순수 함수로 두고, `tests/`의 35개 테스트로 검증했다.
+  그래서 모든 계산을 `btc_analysis.py`에 순수 함수로 두고, `tests/`의 36개 테스트로 검증했다.
 
 ## 데이터 출처 및 라이선스 주의
 
